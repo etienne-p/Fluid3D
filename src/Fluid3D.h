@@ -67,8 +67,6 @@ gl::BufferTextureRef Fluid3D::getVelocityPressureBufferTexRef()
 
 int Fluid3D::computeIndexOffset(int x, int y, int z)
 {
-    //if (x * y * z * (F_FIELD_SIZE - 1 - x) * (F_FIELD_SIZE - 1 - y) * (F_FIELD_SIZE - 1 - z) == 0) return -1;
-    
     return ((x + F_FIELD_SIZE) % F_FIELD_SIZE) +
             ((y + F_FIELD_SIZE) % F_FIELD_SIZE) * F_FIELD_SIZE +
             ((z + F_FIELD_SIZE) % F_FIELD_SIZE) * F_FIELD_SIZE * F_FIELD_SIZE;
@@ -114,28 +112,22 @@ void Fluid3D::setupBuffers()
         mVaos[i] = gl::Vao::create();
         gl::ScopedVao scopeVao( mVaos[i] );
         {
-            // buffer the positions
             mPositions[i] = gl::Vbo::create( GL_ARRAY_BUFFER, positions.size() * sizeof(vec4), positions.data(), GL_STATIC_DRAW );
             {
-                // bind and explain the vbo to your vao so that it knows how to distribute vertices to your shaders.
                 gl::ScopedBuffer sccopeBuffer( mPositions[i] );
                 gl::vertexAttribPointer( F_POSITION_INDEX, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
                 gl::enableVertexAttribArray( F_POSITION_INDEX );
             }
             
-            // buffer the positions
             mVelocitiesPressure[i] = gl::Vbo::create( GL_ARRAY_BUFFER, velocityPressures.size() * sizeof(vec4), velocityPressures.data(), GL_STATIC_DRAW );
             {
-                // bind and explain the vbo to your vao so that it knows how to distribute vertices to your shaders.
                 gl::ScopedBuffer sccopeBuffer( mVelocitiesPressure[i] );
                 gl::vertexAttribPointer( F_VELOCITY_PRESSURE_INDEX, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid*) 0 );
                 gl::enableVertexAttribArray( F_VELOCITY_PRESSURE_INDEX );
             }
             
-            // buffer the connections
             mConnectionsA[i] = gl::Vbo::create( GL_ARRAY_BUFFER, connectionsA.size() * sizeof(ivec4), connectionsA.data(), GL_STATIC_DRAW );
             {
-                // bind and explain the vbo to your vao so that it knows how to distribute vertices to your shaders.
                 gl::ScopedBuffer scopeBuffer( mConnectionsA[i] );
                 gl::vertexAttribIPointer( F_CONNECTION_A_INDEX, 4, GL_INT, 0, (const GLvoid*) 0 );
                 gl::enableVertexAttribArray( F_CONNECTION_A_INDEX );
@@ -143,7 +135,6 @@ void Fluid3D::setupBuffers()
             
             mConnectionsB[i] = gl::Vbo::create( GL_ARRAY_BUFFER, connectionsB.size() * sizeof(ivec4), connectionsB.data(), GL_STATIC_DRAW );
             {
-                // bind and explain the vbo to your vao so that it knows how to distribute vertices to your shaders.
                 gl::ScopedBuffer scopeBuffer( mConnectionsB[i] );
                 gl::vertexAttribIPointer( F_CONNECTION_B_INDEX, 3, GL_INT, 0, (const GLvoid*) 0 );
                 gl::enableVertexAttribArray( F_CONNECTION_B_INDEX );
@@ -158,16 +149,11 @@ void Fluid3D::setupBuffers()
 
 void Fluid3D::setupGlsl()
 {
-    // These are the names of our out going vertices. GlslProg needs to
-    // know which attributes should be captured by Transform FeedBack.
     std::vector<std::string> feedbackVaryings({ "tf_position", "tf_velocity_pressure" });
     
     gl::GlslProg::Format updateFormat;
     updateFormat.vertex( loadAsset( "fluid_update.vert" ) )
-    // Because we have separate buffers with which
-    // to capture attributes, we're using GL_SEPERATE_ATTRIBS
     .feedbackFormat( GL_SEPARATE_ATTRIBS )
-    // We also send the names of the attributes to capture
     .feedbackVaryings( feedbackVaryings );
     
     mUpdateGlsl = gl::GlslProg::create( updateFormat );
@@ -196,7 +182,6 @@ void Fluid3D::update(vec3 inputPosition, vec3 inputVelocity)
     GLuint indexFunc1 = glGetSubroutineIndex(shaderProgram, GL_VERTEX_SHADER, "compute_pressure");
     GLuint indexFunc2 = glGetSubroutineIndex(shaderProgram, GL_VERTEX_SHADER, "compute_velocity");
     
-    // TODO: add dynamic control of iterations per frame
     for( auto i = 0; i < 2; ++i )
     {
         glUniformSubroutinesuiv(GL_VERTEX_SHADER, 1, i % 2 == 0 ? &indexFunc1 : &indexFunc2);
